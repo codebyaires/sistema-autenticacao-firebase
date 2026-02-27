@@ -54,7 +54,7 @@ Projeto arquitetado e desenvolvido com foco em boas práticas de código por:
 
 * **Victor Gabriel** - [LinkedIn](www.linkedin.com/in/victor-aires-93621636a) | [GitHub](https://github.com/codebyaires)
 
-* **[Peterson Ruivo]** - [[LinkedIn do Amigo](https://www.linkedin.com/in/petersonruivo/)]
+* **[Peterson Ruivo]** - [[LinkedIn](https://www.linkedin.com/in/petersonruivo/)]
 [GitHub](https://github.com/ruivocodespace)
 
 * **Vitor Augusto** - [LinkedIn](https://www.linkedin.com/in/vitor-a-lucn/) | [GitHub](https://github.com/Vitor-ALucn)
