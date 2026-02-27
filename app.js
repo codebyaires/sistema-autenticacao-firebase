@@ -1,70 +1,118 @@
-// Importa as ferramentas do Firebase direto do Google
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+/**
+ * @file app.js
+ * @description Lógica de autenticação frontend via Firebase e comunicação com a API PHP.
+ * @author Victor Gabriel, Peterson Ruivo e Vitor Augusto
+ * @version 1.1.0
+ */
 
-// SUAS CHAVES REAIS DO FIREBASE
+// ============================================
+// CONFIGURAÇÃO DO FIREBASE
+// ============================================
 const firebaseConfig = {
-  apiKey: "AIzaSyBk6g1ooxLFriT4jzxEmrd1IuC0gykg3pA",
-  authDomain: "fir-outliner.firebaseapp.com",
-  projectId: "fir-outliner",
-  storageBucket: "fir-outliner.firebasestorage.app",
-  messagingSenderId: "67431209635",
-  appId: "1:67431209635:web:2375d2db80b11873d9fd16",
-  measurementId: "G-TMZVJG7SYB"
+    apiKey: "AIzaSyCtl7o0IjKliLC-fnf-RekT9toi6X1i8Dk",
+    authDomain: "aula4-teste1.firebaseapp.com",
+    projectId: "aula4-teste1",
+    storageBucket: "aula4-teste1.firebasestorage.app",
+    messagingSenderId: "295101879405",
+    appId: "1:295101879405:web:b99346d5c9907a7fd65b64"
 };
 
-// Inicializa o Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const googleProvider = new firebase.auth.GoogleAuthProvider();
 
-// Ação do botão de Entrar
-document.getElementById('btnLogin').addEventListener('click', () => {
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    const msgBox = document.getElementById('mensagem');
+// Assinatura silenciosa para desenvolvedores no console
+console.log(
+    "%c🚀 Autenticação Inicializada\n%cDev: Victor Gabriel", 
+    "color: #FFCA28; font-size: 14px; font-weight: bold;", 
+    "color: #4CAF50; font-size: 12px;"
+);
 
-    msgBox.style.color = "black";
-    msgBox.innerText = "Autenticando no Firebase...";
+// ============================================
+// FUNÇÕES UTILITÁRIAS
+// ============================================
 
-    // Firebase tenta fazer o login
-    signInWithEmailAndPassword(auth, email, password)
-        .then((userCredential) => {
-            msgBox.innerText = "Login aprovado! Gerando token...";
-            // Sucesso! Pega o Token de segurança
-            return userCredential.user.getIdToken();
-        })
-        .then((idToken) => {
-            // Manda o Token para o seu PHP local
-            enviarParaPHP(idToken);
-        })
-        .catch((error) => {
-            msgBox.style.color = "red";
-            msgBox.innerText = "Erro ao logar: " + error.message;
-        });
-});
-
-// Função que envia o token para o XAMPP
-function enviarParaPHP(token) {
-    const msgBox = document.getElementById('mensagem');
-    
-    fetch('valida.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: token })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.status === 'sucesso') {
-            msgBox.style.color = "green";
-            msgBox.innerText = data.mensagem + " \nLogado como: " + data.dados_servidor.usuario;
-        } else {
-            msgBox.style.color = "red";
-            msgBox.innerText = "Erro no PHP: " + data.mensagem;
-        }
-    })
-    .catch(error => {
-        msgBox.style.color = "red";
-        msgBox.innerText = "Erro ao falar com o PHP. O XAMPP está ligado?";
-        console.error(error);
-    });
+function setStatus(message, type = 'info') {
+    const status = document.getElementById('status');
+    status.innerText = message;
+    status.className = `show ${type}`;
 }
+
+// Diferencial: Tradutor de erros do Firebase para melhorar a UX
+function traduzirErroFirebase(codigoErro) {
+    const erros = {
+        'auth/invalid-email': 'O formato do e-mail é inválido.',
+        'auth/user-disabled': 'Esta conta de usuário foi desativada.',
+        'auth/user-not-found': 'Usuário não encontrado. Verifique o e-mail.',
+        'auth/wrong-password': 'A senha está incorreta.',
+        'auth/popup-closed-by-user': 'A janela de login do Google foi fechada.',
+        'auth/popup-blocked': 'O popup do Google foi bloqueado pelo navegador.',
+        'auth/network-request-failed': 'Falha na conexão. Verifique sua internet.'
+    };
+    return erros[codigoErro] || 'Ocorreu um erro desconhecido na autenticação.';
+}
+
+// ============================================
+// LÓGICA DE LOGIN
+// ============================================
+
+async function loginEmail() {
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+
+    if (!email || !password) {
+        setStatus('⚠️ Preencha e-mail e senha', 'error');
+        return;
+    }
+
+    try {
+        setStatus('🔄 Autenticando...', 'info');
+        const result = await auth.signInWithEmailAndPassword(email, password);
+        const token = await result.user.getIdToken();
+        await verificarToken(token);
+    } catch (error) {
+        console.error('Erro Auth:', error);
+        // Aplica a tradução amigável em vez do erro em inglês
+        setStatus('❌ ' + traduzirErroFirebase(error.code), 'error');
+    }
+}
+
+async function loginGoogle() {
+    try {
+        setStatus('🔄 Abrindo Google...', 'info');
+        const result = await auth.signInWithPopup(googleProvider);
+        const token = await result.user.getIdToken();
+        await verificarToken(token);
+    } catch (error) {
+        console.error('Erro Google:', error);
+        setStatus('❌ ' + traduzirErroFirebase(error.code), 'error');
+    }
+}
+
+async function verificarToken(token) {
+    try {
+        const response = await fetch('verificar.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: token })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            setStatus('✅ Login realizado! Redirecionando...', 'success');
+            setTimeout(() => {
+                window.location.href = 'dashboard.php';
+            }, 1500);
+        } else {
+            setStatus('❌ ' + result.message, 'error');
+        }
+    } catch (error) {
+        console.error('Erro PHP:', error);
+        setStatus('❌ Erro de comunicação com servidor', 'error');
+    }
+}
+
+document.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') loginEmail();
+});
