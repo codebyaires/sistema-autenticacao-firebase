@@ -32,8 +32,8 @@ function responder($dados, $codigo = 200) {
 // ============================================
 // CONFIGURAÇÃO DO FIREBASE
 // ============================================
-$projectId = 'aula4-teste1'; // Coloque seu Project ID do Firebase
-$apiKey = "AIzaSyCtl7o0IjKliLC-fnf-RekT9toi6X1i8Dk";       // Coloque sua API Key do Firebase
+$projectId = 'fir-outliner'; // Coloque seu Project ID do Firebase
+$apiKey = "AIzaSyBk6g1ooxLFriT4jzxEmrd1IuC0gykg3pA";       // Coloque sua API Key do Firebase
 
 try {
     // Recebe token do frontend
