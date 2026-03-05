@@ -9,12 +9,13 @@
 // CONFIGURAÇÃO DO FIREBASE
 // ============================================
 const firebaseConfig = {
-    apiKey: "AIzaSyCtl7o0IjKliLC-fnf-RekT9toi6X1i8Dk",
-    authDomain: "aula4-teste1.firebaseapp.com",
-    projectId: "aula4-teste1",
-    storageBucket: "aula4-teste1.firebasestorage.app",
-    messagingSenderId: "295101879405",
-    appId: "1:295101879405:web:b99346d5c9907a7fd65b64"
+    apiKey: "AIzaSyBk6g1ooxLFriT4jzxEmrd1IuC0gykg3pA",
+    authDomain: "fir-outliner.firebaseapp.com",
+    projectId: "fir-outliner",
+    storageBucket: "fir-outliner.firebasestorage.app",
+    messagingSenderId: "67431209635",
+    appId: "1:67431209635:web:2375d2db80b11873d9fd16",
+    measurementId: "G-TMZVJG7SYB"
 };
 
 firebase.initializeApp(firebaseConfig);

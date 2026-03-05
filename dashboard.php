@@ -5,7 +5,14 @@
  * @author Victor Gabriel, Peterson Ruivo e Vitor Augusto
  * @version 1.1.0
  */
+// Inicia a sessão para checar se o usuário passou pelo verificar.php
 session_start();
+
+// Se a variável 'logado' não existir ou for falsa, chuta de volta para o login
+if (!isset($_SESSION["logado"]) || $_SESSION["logado"] !== true) {
+    header("Location: index.html");
+    exit;
+}
 
 // Verifica se está logado
 if (!isset($_SESSION['logado']) || $_SESSION['logado'] !== true) {
