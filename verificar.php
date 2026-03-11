@@ -1,12 +1,11 @@
 <?php
 /**
  * @file verificar.php
- * @description Validação de token JWT do Firebase via API REST e gerador de sessão PHP.
- * @author Victor Gabriel, Peterson Ruivo & Vitor Augusto]
- * @version 1.1.0
+ * @description Validação de token JWT, gerador de sessão e Sincronização automática com MySQL.
+ * @author Victor Gabriel
+ * @version 1.2.0
  */
 
-// verificar.php
 ob_start();
 error_reporting(0);
 ini_set('display_errors', 0);
@@ -32,11 +31,11 @@ function responder($dados, $codigo = 200) {
 // ============================================
 // CONFIGURAÇÃO DO FIREBASE
 // ============================================
-$projectId = 'fir-outliner'; // Coloque seu Project ID do Firebase
-$apiKey = "AIzaSyBk6g1ooxLFriT4jzxEmrd1IuC0gykg3pA";       // Coloque sua API Key do Firebase
+$projectId = 'fir-outliner'; 
+$apiKey = "AIzaSyBk6g1ooxLFriT4jzxEmrd1IuC0gykg3pA"; 
 
 try {
-    // Recebe token do frontend
+    // 1. Recebe token do frontend
     $input = json_decode(file_get_contents('php://input'), true);
     $token = $input['token'] ?? '';
     
@@ -44,9 +43,7 @@ try {
         responder(['success' => false, 'message' => 'Token não enviado'], 400);
     }
     
-    // ============================================
-    // VALIDA TOKEN USANDO API REST DO FIREBASE
-    // ============================================
+    // 2. Valida token usando API REST do Firebase
     $url = "https://identitytoolkit.googleapis.com/v1/accounts:lookup?key={$apiKey}";
     
     $ch = curl_init($url);
@@ -71,28 +68,55 @@ try {
     
     $user = $data['users'][0];
     
+    // Variáveis que vieram do Firebase
+    $uidFirebase = $user['localId'];
+    $email = $user['email'] ?? '';
+    // Se a pessoa criou conta por e-mail/senha, o Google não dá "Nome", então colocamos um padrão
+    $nome = $user['displayName'] ?? 'Novo Usuário'; 
+    $foto = $user['photoUrl'] ?? '';
+    
     // ============================================
-    // CRIA SESSÃO PHP
+    // 3. SINCRONIZAÇÃO COM O MYSQL (O Pulo do Gato)
     // ============================================
-    $_SESSION['uid'] = $user['localId'];
-    $_SESSION['email'] = $user['email'] ?? '';
-    $_SESSION['nome'] = $user['displayName'] ?? 'Usuário';
-    $_SESSION['foto'] = $user['photoUrl'] ?? '';  // Foto do Google
+    // Chama a sua conexão com o banco de dados
+    require_once "conexao.php";
+    
+    if (isset($conexao)) {
+        // Verifica se o e-mail já existe na tabela 'usuario'
+        $stmt = mysqli_prepare($conexao, "SELECT id FROM usuario WHERE email = ?");
+        mysqli_stmt_bind_param($stmt, "s", $email);
+        mysqli_stmt_execute($stmt);
+        mysqli_stmt_store_result($stmt);
+        
+        // Se retornar 0, significa que é o primeiro login dessa pessoa no sistema!
+        if (mysqli_stmt_num_rows($stmt) == 0) {
+            mysqli_stmt_close($stmt); // Fecha a busca
+            
+            // Faz o INSERT do novo usuário no seu MySQL local
+            // (Assumindo que sua tabela preenche o 'id' e o 'criado_em' automaticamente no MySQL)
+            $stmtInsert = mysqli_prepare($conexao, "INSERT INTO usuario (nome, email) VALUES (?, ?)");
+            mysqli_stmt_bind_param($stmtInsert, "ss", $nome, $email);
+            mysqli_stmt_execute($stmtInsert);
+            mysqli_stmt_close($stmtInsert);
+        } else {
+            // O usuário já existe no MySQL, apenas fecha a consulta
+            mysqli_stmt_close($stmt);
+        }
+    }
+
+    // ============================================
+    // 4. CRIA SESSÃO PHP
+    // ============================================
+    $_SESSION['uid'] = $uidFirebase;
+    $_SESSION['email'] = $email;
+    $_SESSION['nome'] = $nome;
+    $_SESSION['foto'] = $foto;
     $_SESSION['logado'] = true;
     $_SESSION['inicio'] = time();
     
-    // Resposta de Sucesso com sua assinatura embutida (o Easter Egg técnico)
     responder([
         'success' => true,
-        'message' => 'Autenticação OK',
-        '_meta' => [
-            'author' => 'Victor Gabriel, Peterson Ruivo & Vitor Augusto]',
-            'version' => '1.1.0'
-        ],
-        'dados' => [
-            'email' => $_SESSION['email'],
-            'nome' => $_SESSION['nome']
-        ]
+        'message' => 'Autenticação e sincronização OK'
     ]);
     
 } catch (\Exception $e) {

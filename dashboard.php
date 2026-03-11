@@ -2,21 +2,16 @@
 /**
  * @file dashboard.php
  * @description Interface da área logada e validação de sessão ativa do usuário.
- * @author Victor Gabriel, Peterson Ruivo e Vitor Augusto
- * @version 1.1.0
+ * @author Victor Gabriel
+ * @version 1.2.0
  */
+
 // Inicia a sessão para checar se o usuário passou pelo verificar.php
 session_start();
 
 // Se a variável 'logado' não existir ou for falsa, chuta de volta para o login
 if (!isset($_SESSION["logado"]) || $_SESSION["logado"] !== true) {
-    header("Location: index.html");
-    exit;
-}
-
-// Verifica se está logado
-if (!isset($_SESSION['logado']) || $_SESSION['logado'] !== true) {
-    header('Location: index.html');
+    header("Location: login.php");
     exit;
 }
 
@@ -50,7 +45,7 @@ $segundos = $tempoSessao % 60;
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="author" content="Victor Gabriel, Peterson Ruivo e Vitor Augusto">
+    <meta name="author" content="Victor Gabriel">
     <title>Painel | Bem-vindo!</title>
     <link rel="stylesheet" href="dashboard-style.css">
 </head>
@@ -150,7 +145,7 @@ $segundos = $tempoSessao % 60;
         <div class="footer">
             <p>&copy; <?= date('Y') ?> Meu Sistema. Todos os direitos reservados.</p>
             <p class="credits">
-                Desenvolvido com 💻 por <a href="www.linkedin.com/in/victor-aires-93621636a" target="_blank">Victor Gabriel, Peterson Ruivo & Vitor Augusto</a>
+                Desenvolvido com 💻 por <a href="https://www.linkedin.com/in/victor-aires-93621636a" target="_blank">Victor Gabriel</a>
             </p>
         </div>
         </div>

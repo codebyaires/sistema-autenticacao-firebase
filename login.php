@@ -1,8 +1,8 @@
 <?php
 session_start();
-// Se já estiver logado, não precisa logar de novo
+// Se já estiver logado, manda direto para o Dashboard!
 if (isset($_SESSION["logado"]) && $_SESSION["logado"] === true) {
-    header("Location: cadastro_usuario.php");
+    header("Location: dashboard.php");
     exit;
 }
 ?>
@@ -24,12 +24,12 @@ if (isset($_SESSION["logado"]) && $_SESSION["logado"] === true) {
         <form id="formLogin">
             <div class="mb-4">
                 <label for="email" class="block text-gray-700 font-medium mb-2">Email</label>
-                <input type="email" id="email" required placeholder="Digite seu email" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <input type="email" id="email" required placeholder="Digite seu email" autocomplete="email" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
             </div>
 
             <div class="mb-6">
                 <label for="senha" class="block text-gray-700 font-medium mb-2">Senha</label>
-                <input type="password" id="senha" required placeholder="Digite sua senha" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <input type="password" id="senha" required placeholder="Digite sua senha" autocomplete="current-password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
             </div>
 
             <button type="submit" id="btnEntrar" class="w-full bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition duration-200 mb-4">
@@ -100,7 +100,8 @@ if (isset($_SESSION["logado"]) && $_SESSION["logado"] === true) {
             .then(data => {
                 console.log("Resposta do PHP:", data);
                 if (data.success) {
-                    window.location.href = "cadastro_usuario.php";
+                    // MUDANÇA: Redirecionando para o painel correto
+                    window.location.href = "dashboard.php";
                 } else {
                     mostrarErro("Recusado pelo PHP: " + data.message);
                 }
@@ -128,11 +129,22 @@ if (isset($_SESSION["logado"]) && $_SESSION["logado"] === true) {
             const senha = document.getElementById('senha').value;
 
             signInWithEmailAndPassword(auth, email, senha)
-                .then((cred) => cred.user.getIdToken())
+                .then((cred) => {
+                    // MUDANÇA: Trava de segurança do E-mail Verificado
+                    if (!cred.user.emailVerified) {
+                        auth.signOut();
+                        throw new Error("unverified-email");
+                    }
+                    return cred.user.getIdToken();
+                })
                 .then((token) => enviarTokenParaPHP(token))
                 .catch((error) => {
                     console.error("Erro Firebase:", error);
-                    mostrarErro("Email ou senha incorretos.");
+                    if (error.message === "unverified-email") {
+                        mostrarErro("Acesso negado. Vá no seu e-mail e clique no link de ativação.");
+                    } else {
+                        mostrarErro("Email ou senha incorretos.");
+                    }
                 });
         });
 
